@@ -1,0 +1,88 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>SignalR Chat - Metanit.com</title>
+</head>
+<body>
+    <div id="loginBlock">
+        Введите логин:<br />
+        <input id="userName" type="text" />
+        <input id="loginBtn" type="button" value="Войти" />
+    </div><br />
+
+    <div id="header"></div><br />
+
+    <div id="inputForm">
+        <input type="text" id="message" />
+        <input type="button" id="sendBtn" value="Отправить" />
+    </div>
+    <div id="chatroom"></div>
+    <script src="js/signalr/dist/browser/signalr.min.js"></script>
+    <script>const hubConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/chat")
+            .build();
+
+        let userName = '';
+        // получение сообщения от сервера
+        hubConnection.on('Send', function (message, userName) {
+
+            // создаем элемент <b> для имени пользователя
+            let userNameElem = document.createElement("b");
+            userNameElem.appendChild(document.createTextNode(userName + ': '));
+
+            // создает элемент <p> для сообщения пользователя
+            let elem = document.createElement("p");
+            elem.appendChild(userNameElem);
+            elem.appendChild(document.createTextNode(message));
+
+            var firstElem = document.getElementById("chatroom").firstChild;
+            document.getElementById("chatroom").insertBefore(elem, firstElem);
+        });
+
+        var un = document.getElementById("userName");
+        
+        // установка имени пользователя
+        document.getElementById("userName").addEventListener("keyup", function (e) {
+            //отправить с Enter
+            if (event.keyCode == 13) {
+                userName = document.getElementById("userName").value;
+                document.getElementById("header").innerHTML = '<h3>Welcome ' + userName + '</h3>';
+                document.getElementById("loginBtn").click();
+                document.getElementById("userName").value = "";
+            }
+            
+
+        });
+
+        //отправить кнопкой
+        document.getElementById("loginBtn").addEventListener("click", function (e) {
+                userName = document.getElementById("userName").value;
+                document.getElementById("header").innerHTML = '<h3>Welcome ' + userName + '</h3>';
+                document.getElementById("loginBtn").click();
+        });
+        document.getElementById("userName").value = "";
+
+
+        // отправка сообщения на сервер, Enter
+        document.getElementById("message").addEventListener("keyup", function (e) {
+            if (event.keyCode == 13) {
+                let message = document.getElementById("message").value;
+                hubConnection.invoke("Send", message, userName);
+                //очистка поля после отправки сообщения    
+                document.getElementById("message").value = "";
+            }
+        });
+
+        //отправка с кнопкой
+        document.getElementById("sendBtn").addEventListener("click", function (e) {
+            let message = document.getElementById("message").value;
+            hubConnection.invoke("Send", message, userName);
+            document.getElementById("message").value = "";
+        });
+
+        hubConnection.start();
+
+        </script>
+</body>
+</html>
